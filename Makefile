@@ -5,30 +5,36 @@ build:
 	CGO_ENABLED=0 go build gossa.go
 	rm gossa.go
 
+install:
+	sudo cp gossa /usr/local/bin
+
 run:
-	make build
-	./gossa test-fixture
+	./gossa -verb=true test-fixture
+
+run-ro:
+	./gossa -verb=true -ro=true test-fixture
 
 run-extra:
-	make build
-	./gossa -prefix="/fancy-path/" -symlinks=true test-fixture
+	./gossa -verb=true -prefix="/fancy-path/" -k=false -symlinks=true test-fixture
 
-ci:
-	-@cd test-fixture && ln -s ../docker .
+test:
 	make build
-	timeout 10 make run &
-	sleep 11 && timeout 10 make run-extra &
-	cp src/gossa_test.go . && go test
-	rm gossa_test.go
+	-rm gossa_test.go
+	-@cd test-fixture && ln -s ../support .
+	cp src/gossa_test.go .
+	go test
 
 watch:
-	ls src/* gossa-ui/* | entr -rc make run
+	ls src/* gossa-ui/* | entr -rc make build run
 
 watch-extra:
-	ls src/* gossa-ui/* | entr -rc make run-extra
+	ls src/* gossa-ui/* | entr -rc make build run-extra
 
-watch-ci:
-	ls src/* gossa-ui/* | entr -rc make ci
+watch-ro:
+	ls src/* gossa-ui/* | entr -rc make build run-ro
+
+watch-test:
+	ls src/* gossa-ui/* | entr -rc make test
 
 build-all:
 	cp src/gossa.go gossa.go
